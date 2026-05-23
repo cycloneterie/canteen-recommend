@@ -1,0 +1,2658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四食堂菜品推荐系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1em;
+        }
+
+        .quick-scenarios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .scenario-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            border: 3px solid transparent;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .scenario-card.selected {
+            border-color: #ffd700;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .scenario-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .scenario-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .scenario-desc {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-group.main {
+            background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #667eea30;
+        }
+
+        .filter-group h3 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group.main h3 {
+            font-size: 1.3em;
+            color: #667eea;
+        }
+
+        .filter-group h3::before {
+            content: '▸';
+            color: #667eea;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-group.main .filter-buttons {
+            gap: 15px;
+        }
+
+        .filter-buttons-with-more {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .more-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-btn.small {
+            padding: 8px 16px;
+            font-size: 13px;
+            border-width: 1px;
+            min-width: 60px;
+        }
+
+        .filter-btn.small.active {
+            animation: pulseSmall 0.4s ease-out;
+        }
+
+        @keyframes pulseSmall {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% {
+                transform: scale(1.15);
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        .filter-btn:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            white-space: pre-line;
+            line-height: 1.8;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+            z-index: 1000;
+            margin-bottom: 10px;
+            max-width: 350px;
+            min-width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-btn:hover::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% - 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #333;
+            z-index: 1000;
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .filter-group.main .filter-btn {
+            padding: 15px 25px;
+            font-size: 16px;
+        }
+
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            animation: pulse 0.4s ease-out;
+        }
+
+        .filter-btn:active {
+            transform: translateY(1px);
+            transition: transform 0.1s;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        .mutually-exclusive .filter-btn.active {
+            background: #764ba2;
+            border-color: #764ba2;
+            animation: pulsePurple 0.4s ease-out;
+        }
+
+        @keyframes pulsePurple {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(118, 75, 162, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(118, 75, 162, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(118, 75, 162, 0);
+            }
+        }
+
+        .filter-btn:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+            z-index: 1000;
+            margin-bottom: 8px;
+            max-width: 200px;
+            white-space: normal;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .spicy-slider-container {
+            margin: 20px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .spicy-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #4CAF50, #FFC107, #FF5722);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .spicy-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border: 3px solid #667eea;
+        }
+
+        .spicy-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .price-slider-container {
+            margin: 20px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .price-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .price-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .budget-toggles {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .budget-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .budget-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .budget-btn.active {
+            background: #667eea;
+            color: white;
+            animation: pulseBudget 0.4s ease-out;
+        }
+
+        .budget-btn:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+
+        @keyframes pulseBudget {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 15px rgba(102, 126, 234, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-recommend {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-recommend:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-random {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-random:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+        }
+
+        .btn-reset {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #d0d0d0;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-count {
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sort-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .sort-btn:hover, .sort-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .food-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .food-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: #667eea;
+        }
+
+        .food-card.recommended {
+            border-color: #ffd700;
+            background: linear-gradient(135deg, #fff9c4 0%, #ffffff 100%);
+        }
+
+        .food-card.hot {
+            border-color: #ff5722;
+        }
+
+        .food-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .food-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .food-window {
+            color: #667eea;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .food-badges {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-hot { background: #ffebee; color: #f44336; }
+        .badge-new { background: #e3f2fd; color: #2196f3; }
+        .badge-recommend { background: #fff3e0; color: #ff9800; }
+
+        .food-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .food-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .tag {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-category { background: #e3f2fd; color: #1976d2; }
+        .tag-temp { background: #f3e5f5; color: #7b1fa2; }
+        .tag-cooking { background: #e0f2f1; color: #00796b; }
+        .tag-spicy { background: #ffebee; color: #f44336; }
+        .tag-oily { background: #fff3e0; color: #f57c00; }
+        .tag-satiety { background: #e8f5e9; color: #388e3c; }
+
+        .match-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .food-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #e0e0e0;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .quick-scenarios {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+
+            .food-info {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .filter-group.main .filter-buttons .filter-btn:nth-child(3),
+            .filter-group.main .filter-buttons .filter-btn:nth-child(4),
+            .filter-group.main .filter-buttons .filter-btn:nth-child(5) {
+                margin-left: 0;
+            }
+
+            .filter-buttons-with-more {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>四食堂菜品推荐系统</h1>
+        <p class="subtitle">快速找到最适合你的今日美食</p>
+
+        <!-- 快捷场景选择 -->
+        <div class="quick-scenarios">
+            <div class="scenario-card" data-scenario="quick">
+                <div class="scenario-icon">⚡</div>
+                <div class="scenario-title">快速简餐</div>
+                <div class="scenario-desc">赶时间？找一份快速美食</div>
+            </div>
+            <div class="scenario-card" data-scenario="satisfying">
+                <div class="scenario-icon">🍖</div>
+                <div class="scenario-title">满足一餐</div>
+                <div class="scenario-desc">想吃顿饱的？来份硬菜</div>
+            </div>
+            <div class="scenario-card" data-scenario="light">
+                <div class="scenario-icon">🥗</div>
+                <div class="scenario-title">轻食主义</div>
+                <div class="scenario-desc">清淡健康，无负担</div>
+            </div>
+            <div class="scenario-card" data-scenario="treat">
+                <div class="scenario-icon">🎉</div>
+                <div class="scenario-title">犒劳自己</div>
+                <div class="scenario-desc">想吃点好的？奖励自己</div>
+            </div>
+            <div class="scenario-card" data-scenario="random">
+                <div class="scenario-icon">🎲</div>
+                <div class="scenario-title">随机推荐</div>
+                <div class="scenario-desc">选择困难？让系统帮你选</div>
+            </div>
+            <div class="scenario-card" data-scenario="more">
+                <div class="scenario-icon">⚙️</div>
+                <div class="scenario-title">更多筛选</div>
+                <div class="scenario-desc">自定义你的需求</div>
+            </div>
+        </div>
+
+        <!-- 详细筛选 -->
+        <div class="filter-section">
+            <div class="filter-group main">
+                <h3>🍱 菜品类别</h3>
+                <div class="filter-buttons-with-more">
+                    <div class="filter-buttons" id="categoryFilters">
+                        <button class="filter-btn" data-type="category" data-value="面食" data-tooltip="拌面 拉面 水饺 云吞">面食</button>
+                        <button class="filter-btn" data-type="category" data-value="米饭" data-tooltip="炒菜 素菜 荤菜">米饭</button>
+                        <button class="filter-btn" data-type="category" data-value="汤类" data-tooltip="瓦罐汤 乌鸡汤">汤类</button>
+                        <button class="filter-btn" data-type="category" data-value="盖浇饭" data-tooltip="铁板饭 木桶饭 煲仔饭">盖浇饭</button>
+                    </div>
+                    <div class="more-filters" id="otherCategoryFilters">
+                        <button class="filter-btn small" data-type="category" data-value="小吃" data-tooltip="水饺 馄饨 小笼包">小吃</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group main">
+                <h3>🔥 烹饪方式</h3>
+                <div class="filter-buttons-with-more">
+                    <div class="filter-buttons" id="cookingFilters">
+                        <button class="filter-btn" data-type="cooking" data-value="炒" data-tooltip="炒菜 炒饭">炒菜</button>
+                        <button class="filter-btn" data-type="cooking" data-value="蒸" data-tooltip="蒸饺 蒸点">蒸菜</button>
+                        <button class="filter-btn" data-type="cooking" data-value="煮" data-tooltip="面条 米粉 汤">煮菜</button>
+                        <button class="filter-btn" data-type="cooking" data-value="烤" data-tooltip="烤鸭 烧腊">烧烤</button>
+                    </div>
+                    <div class="more-filters" id="otherCookingFilters">
+                        <button class="filter-btn small" data-type="cooking" data-value="卤" data-tooltip="卤味">卤制</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>🍲 温度偏好</h3>
+                <div class="filter-buttons mutually-exclusive" id="tempFilters">
+                    <button class="filter-btn" data-type="temp" data-value="热" data-tooltip="热菜、热汤">热菜</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>🌶️ 辣度选择</h3>
+                <div class="spicy-slider-container">
+                    <input type="range" class="spicy-slider" id="spicySlider" min="0" max="3" value="1">
+                    <div class="spicy-labels">
+                        <span>不辣</span>
+                        <span>微辣</span>
+                        <span>中辣</span>
+                        <span>特辣</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>💰 预算选择</h3>
+                <div class="budget-toggles" id="budgetFilters">
+                    <button class="budget-btn" data-budget="low">
+                        <div style="font-weight: bold;">经济实惠</div>
+                        <div style="font-size: 12px;">≤10元</div>
+                    </button>
+                    <button class="budget-btn" data-budget="medium">
+                        <div style="font-weight: bold;">中等价位</div>
+                        <div style="font-size: 12px;">11-20元</div>
+                    </button>
+                    <button class="budget-btn" data-budget="high">
+                        <div style="font-weight: bold;">精品享受</div>
+                        <div style="font-size: 12px;">≥21元</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>🥗 饱腹感</h3>
+                <div class="filter-buttons mutually-exclusive" id="satietyFilters">
+                    <button class="filter-btn" data-type="satiety" data-value="light">轻食（解馋）</button>
+                    <button class="filter-btn" data-type="satiety" data-value="medium">适中（饱腹）</button>
+                    <button class="filter-btn" data-type="satiety" data-value="heavy">超饱（满足）</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>🥬 健康偏好</h3>
+                <div class="filter-buttons" id="healthFilters">
+                    <button class="filter-btn" data-type="health" data-value="vegetarian">全素</button>
+                    <button class="filter-btn" data-type="health" data-value="balanced">荤素搭配</button>
+                    <button class="filter-btn" data-type="health" data-value="low_oil">少油少盐</button>
+                    <button class="filter-btn" data-type="health" data-value="high_protein">高蛋白</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>⭐ 推荐维度</h3>
+                <div class="filter-buttons" id="recommendFilters">
+                    <button class="filter-btn" data-type="recommend" data-value="hot">热门推荐</button>
+                    <button class="filter-btn" data-type="recommend" data-value="high_rating">高评分</button>
+                    <button class="filter-btn" data-type="recommend" data-value="new">新菜尝鲜</button>
+                    <button class="filter-btn" data-type="recommend" data-value="best_value">性价比高</button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn btn-recommend" onclick="getRecommendations()">🎯 智能推荐</button>
+                <button class="action-btn btn-random" onclick="randomRecommend()">🎲 随机推荐</button>
+                <button class="action-btn btn-reset" onclick="resetFilters()">🔄 重置筛选</button>
+            </div>
+        </div>
+
+        <!-- 结果展示 -->
+        <div class="results-section">
+            <div class="results-header">
+                <h2>📋 推荐结果</h2>
+                <div class="sort-options">
+                    <button class="sort-btn active" onclick="sortResults('match')">匹配度</button>
+                    <button class="sort-btn" onclick="sortResults('popularity')">热度</button>
+                    <button class="sort-btn" onclick="sortResults('rating')">评分</button>
+                    <button class="sort-btn" onclick="sortResults('price')">价格</button>
+                </div>
+            </div>
+            <div class="results-count" id="resultsCount">点击推荐按钮开始</div>
+            <div class="cards-container" id="resultsContainer">
+                <div class="no-results">
+                    <div style="font-size: 3em; margin-bottom: 20px;">🍽️</div>
+                    <div>选择你的用餐场景或点击推荐按钮</div>
+                    <div style="font-size: 0.9em; margin-top: 10px; color: #999;">我们会为你推荐最适合的美食</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 菜品数据库 - 四食堂真实菜品数据
+        const foodDatabase = [
+            {
+                "id": 1,
+                "name": "飘香拌面",
+                "window": "四食堂一楼沙县小吃",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 1,
+                "price": 6.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["面食", "花生酱味"],
+                "description": "四食堂一楼沙县小吃 - 花生酱味"
+            },
+            {
+                "id": 2,
+                "name": "柳叶蒸饺",
+                "window": "四食堂一楼沙县小吃",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "蒸",
+                "spicy": 0,
+                "price": 8.0,
+                "satiety": "light",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 72,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面点", "清淡"],
+                "description": "四食堂一楼沙县小吃 - 清淡口味"
+            },
+            {
+                "id": 3,
+                "name": "云吞/扁肉",
+                "window": "四食堂一楼沙县小吃",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 10.0,
+                "satiety": "light",
+                "health": ["balanced"],
+                "rating": 4.4,
+                "popularity": 68,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面点", "鲜香"],
+                "description": "四食堂一楼沙县小吃 - 鲜香口味"
+            },
+            {
+                "id": 4,
+                "name": "瓦罐煨汤(排骨海带/墨鱼)",
+                "window": "四食堂一楼沙县小吃",
+                "category": "汤类",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 10.0,
+                "satiety": "light",
+                "health": ["balanced"],
+                "rating": 4.7,
+                "popularity": 75,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["汤", "清淡"],
+                "description": "四食堂一楼沙县小吃 - 清淡口味"
+            },
+            {
+                "id": 5,
+                "name": "乌鸡滋补汤",
+                "window": "四食堂一楼沙县小吃",
+                "category": "汤类",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 12.0,
+                "satiety": "light",
+                "health": ["balanced"],
+                "rating": 4.8,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["汤", "药膳味"],
+                "description": "四食堂一楼沙县小吃 - 药膳味"
+            },
+            {
+                "id": 6,
+                "name": "招牌五谷鱼粉",
+                "window": "四食堂一楼五谷鱼粉/花甲粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["粉类", "鲜美"],
+                "description": "四食堂一楼五谷鱼粉/花甲粉 - 鲜美"
+            },
+            {
+                "id": 7,
+                "name": "麻辣花甲粉",
+                "window": "四食堂一楼五谷鱼粉/花甲粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 2,
+                "price": 16.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 76,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["粉类", "中辣"],
+                "description": "四食堂一楼五谷鱼粉/花甲粉 - 中辣"
+            },
+            {
+                "id": 8,
+                "name": "西红柿炒鸡蛋",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 4.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.3,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["小荤/素菜", "酸甜"],
+                "description": "四食堂一楼基本伙 - 酸甜口味"
+            },
+            {
+                "id": 9,
+                "name": "青椒肉丝",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 1,
+                "price": 6.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.4,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["荤菜", "微辣"],
+                "description": "四食堂一楼基本伙 - 微辣口味"
+            },
+            {
+                "id": 10,
+                "name": "红烧肉",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 10.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.8,
+                "popularity": 92,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["大荤", "浓郁"],
+                "description": "四食堂一楼基本伙 - 浓郁口味"
+            },
+            {
+                "id": 11,
+                "name": "土豆烧牛肉",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 12.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 88,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["大荤", "咸鲜"],
+                "description": "四食堂一楼基本伙 - 咸鲜口味"
+            },
+            {
+                "id": 12,
+                "name": "手撕包菜",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 3.0,
+                "satiety": "light",
+                "health": ["vegetarian", "low_oil"],
+                "rating": 4.1,
+                "popularity": 65,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["素菜", "咸鲜"],
+                "description": "四食堂一楼基本伙 - 咸鲜口味"
+            },
+            {
+                "id": 13,
+                "name": "地三鲜",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 4.0,
+                "satiety": "light",
+                "health": ["vegetarian"],
+                "rating": 4.2,
+                "popularity": 70,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["素菜", "油香"],
+                "description": "四食堂一楼基本伙 - 油香口味"
+            },
+            {
+                "id": 14,
+                "name": "干锅花菜",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 1,
+                "price": 5.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.3,
+                "popularity": 72,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["小荤", "微辣"],
+                "description": "四食堂一楼基本伙 - 微辣口味"
+            },
+            {
+                "id": 15,
+                "name": "白米饭",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 0.5,
+                "satiety": "heavy",
+                "health": ["vegetarian"],
+                "rating": 4.0,
+                "popularity": 95,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["主食", "原味"],
+                "description": "四食堂一楼基本伙 - 原味主食"
+            },
+            {
+                "id": 16,
+                "name": "杂粮馒头",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "蒸",
+                "spicy": 0,
+                "price": 1.0,
+                "satiety": "medium",
+                "health": ["vegetarian"],
+                "rating": 4.1,
+                "popularity": 60,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["主食", "清甜"],
+                "description": "四食堂一楼基本伙 - 清甜主食"
+            },
+            {
+                "id": 17,
+                "name": "免费汤",
+                "window": "四食堂一楼基本伙(选菜区)",
+                "category": "汤类",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 0.0,
+                "satiety": "light",
+                "health": ["vegetarian", "low_oil"],
+                "rating": 4.0,
+                "popularity": 90,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["汤", "清淡"],
+                "description": "四食堂一楼基本伙 - 清淡免费汤"
+            },
+            {
+                "id": 18,
+                "name": "招牌重庆小面",
+                "window": "四食堂一楼重庆小面/酸辣粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 3,
+                "price": 8.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["面食", "麻辣"],
+                "description": "四食堂一楼重庆小面/酸辣粉 - 麻辣"
+            },
+            {
+                "id": 19,
+                "name": "红肠酸辣粉",
+                "window": "四食堂一楼重庆小面/酸辣粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 2,
+                "price": 12.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.4,
+                "popularity": 75,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["粉类", "酸辣"],
+                "description": "四食堂一楼重庆小面/酸辣粉 - 酸辣"
+            },
+            {
+                "id": 20,
+                "name": "肥肠酸辣粉",
+                "window": "四食堂一楼重庆小面/酸辣粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 2,
+                "price": 15.0,
+                "satiety": "medium",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.5,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["粉类", "酸辣"],
+                "description": "四食堂一楼重庆小面/酸辣粉 - 酸辣"
+            },
+            {
+                "id": 21,
+                "name": "牛肉面/粉",
+                "window": "四食堂一楼重庆小面/酸辣粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 2,
+                "price": 16.0,
+                "satiety": "heavy",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.7,
+                "popularity": 88,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["面/粉", "中辣"],
+                "description": "四食堂一楼重庆小面/酸辣粉 - 中辣"
+            },
+            {
+                "id": 22,
+                "name": "排骨面/粉",
+                "window": "四食堂一楼重庆小面/酸辣粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.6,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面/粉", "咸鲜"],
+                "description": "四食堂一楼重庆小面/酸辣粉 - 咸鲜"
+            },
+            {
+                "id": 23,
+                "name": "肉饼面/粉",
+                "window": "四食堂一楼重庆小面/酸辣粉",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 10.0,
+                "satiety": "medium",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.4,
+                "popularity": 70,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面/粉", "鲜香"],
+                "description": "四食堂一楼重庆小面/酸辣粉 - 鲜香"
+            },
+            {
+                "id": 24,
+                "name": "玉米鲜肉水饺",
+                "window": "四食堂一楼水饺/馄饨",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 12.0,
+                "satiety": "light",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.5,
+                "popularity": 76,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["饺子", "鲜甜"],
+                "description": "四食堂一楼水饺/馄饨 - 鲜甜口味"
+            },
+            {
+                "id": 25,
+                "name": "白菜鲜肉水饺",
+                "window": "四食堂一楼水饺/馄饨",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 11.0,
+                "satiety": "light",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.4,
+                "popularity": 74,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["饺子", "清淡"],
+                "description": "四食堂一楼水饺/馄饨 - 清淡口味"
+            },
+            {
+                "id": 26,
+                "name": "芹菜鲜肉水饺",
+                "window": "四食堂一楼水饺/馄饨",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 11.0,
+                "satiety": "light",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.3,
+                "popularity": 68,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["饺子", "清爽"],
+                "description": "四食堂一楼水饺/馄饨 - 清爽口味"
+            },
+            {
+                "id": 27,
+                "name": "荠菜鲜肉水饺",
+                "window": "四食堂一楼水饺/馄饨",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 12.0,
+                "satiety": "light",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.5,
+                "popularity": 72,
+                "isNew": true,
+                "isHot": false,
+                "tags": ["饺子", "鲜香"],
+                "description": "四食堂一楼水饺/馄饨 - 鲜香口味"
+            },
+            {
+                "id": 28,
+                "name": "虾仁猪肉馄饨",
+                "window": "四食堂一楼水饺/馄饨",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "light",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.7,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["馄饨", "鲜美"],
+                "description": "四食堂一楼水饺/馄饨 - 鲜美口味"
+            },
+            {
+                "id": 29,
+                "name": "扬州炒饭",
+                "window": "四食堂一楼淮扬风味",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 13.0,
+                "satiety": "heavy",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["炒饭", "清淡"],
+                "description": "四食堂一楼淮扬风味 - 清淡口味"
+            },
+            {
+                "id": 30,
+                "name": "红烧狮子头套餐",
+                "window": "四食堂一楼淮扬风味",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.8,
+                "popularity": 88,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["盖浇饭", "咸鲜"],
+                "description": "四食堂一楼淮扬风味 - 咸鲜口味"
+            },
+            {
+                "id": 31,
+                "name": "苏式爆鱼面",
+                "window": "四食堂一楼淮扬风味",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 16.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 75,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面食", "甜咸"],
+                "description": "四食堂一楼淮扬风味 - 甜咸口味"
+            },
+            {
+                "id": 32,
+                "name": "梅菜扣肉饭",
+                "window": "四食堂一楼淮扬风味",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 17.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 86,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["盖浇饭", "浓郁"],
+                "description": "四食堂一楼淮扬风味 - 浓郁口味"
+            },
+            {
+                "id": 33,
+                "name": "千张结烧肉",
+                "window": "四食堂一楼淮扬风味",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.6,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["盖浇饭", "咸鲜"],
+                "description": "四食堂一楼淮扬风味 - 咸鲜口味"
+            },
+            {
+                "id": 34,
+                "name": "铁板孜然牛肉饭",
+                "window": "四食堂一楼铁板/木桶饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 1,
+                "price": 18.0,
+                "satiety": "heavy",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.7,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["铁板饭", "孜然"],
+                "description": "四食堂一楼铁板/木桶饭 - 孜然口味"
+            },
+            {
+                "id": 35,
+                "name": "铁板肥肠饭",
+                "window": "四食堂一楼铁板/木桶饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 3,
+                "price": 18.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.5,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["铁板饭", "麻辣"],
+                "description": "四食堂一楼铁板/木桶饭 - 麻辣口味"
+            },
+            {
+                "id": 36,
+                "name": "铁板香辣鱿鱼饭",
+                "window": "四食堂一楼铁板/木桶饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 2,
+                "price": 17.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.6,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["铁板饭", "香辣"],
+                "description": "四食堂一楼铁板/木桶饭 - 香辣口味"
+            },
+            {
+                "id": 37,
+                "name": "木桶酸菜鱼米饭",
+                "window": "四食堂一楼铁板/木桶饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 2,
+                "price": 17.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 84,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["木桶饭", "酸辣"],
+                "description": "四食堂一楼铁板/木桶饭 - 酸辣口味"
+            },
+            {
+                "id": 38,
+                "name": "木桶腊肉饭",
+                "window": "四食堂一楼铁板/木桶饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 16.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.5,
+                "popularity": 76,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["木桶饭", "咸鲜"],
+                "description": "四食堂一楼铁板/木桶饭 - 咸鲜口味"
+            },
+            {
+                "id": 39,
+                "name": "单人肥牛火锅套餐",
+                "window": "四食堂一楼特色小火锅",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 25.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.8,
+                "popularity": 90,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["小火锅", "可选"],
+                "description": "四食堂一楼特色小火锅 - 可选口味"
+            },
+            {
+                "id": 40,
+                "name": "番茄锅底",
+                "window": "四食堂一楼特色小火锅",
+                "category": "汤类",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 19.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["火锅", "酸甜"],
+                "description": "四食堂一楼特色小火锅 - 酸甜锅底"
+            },
+            {
+                "id": 41,
+                "name": "麻辣锅底",
+                "window": "四食堂一楼特色小火锅",
+                "category": "汤类",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 3,
+                "price": 19.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.7,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["火锅", "麻辣"],
+                "description": "四食堂一楼特色小火锅 - 麻辣锅底"
+            },
+            {
+                "id": 42,
+                "name": "菌汤锅底",
+                "window": "四食堂一楼特色小火锅",
+                "category": "汤类",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 19.0,
+                "satiety": "medium",
+                "health": ["vegetarian", "low_oil"],
+                "rating": 4.5,
+                "popularity": 75,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["火锅", "清鲜"],
+                "description": "四食堂一楼特色小火锅 - 清鲜锅底"
+            },
+            {
+                "id": 43,
+                "name": "骨汤麻辣烫",
+                "window": "四食堂二楼麻辣烫窗口",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 1,
+                "price": 21.8,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["麻辣烫", "微辣"],
+                "description": "四食堂二楼麻辣烫窗口 - 微辣"
+            },
+            {
+                "id": 44,
+                "name": "番茄麻辣烫",
+                "window": "四食堂二楼麻辣烫窗口",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 21.8,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.4,
+                "popularity": 76,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["麻辣烫", "酸甜"],
+                "description": "四食堂二楼麻辣烫窗口 - 酸甜"
+            },
+            {
+                "id": 45,
+                "name": "藤椒麻辣烫",
+                "window": "四食堂二楼麻辣烫窗口",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 3,
+                "price": 21.8,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["麻辣烫", "麻辣"],
+                "description": "四食堂二楼麻辣烫窗口 - 麻辣"
+            },
+            {
+                "id": 46,
+                "name": "烧烤味烤盘饭",
+                "window": "四食堂二楼烤盘饭窗口",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 1,
+                "price": 9.9,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.4,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["烤盘饭", "酱香"],
+                "description": "四食堂二楼烤盘饭窗口 - 酱香口味"
+            },
+            {
+                "id": 47,
+                "name": "香辣味烤盘饭",
+                "window": "四食堂二楼烤盘饭窗口",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 2,
+                "price": 9.9,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["烤盘饭", "中辣"],
+                "description": "四食堂二楼烤盘饭窗口 - 中辣口味"
+            },
+            {
+                "id": 48,
+                "name": "麻辣味烤盘饭",
+                "window": "四食堂二楼烤盘饭窗口",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 3,
+                "price": 9.9,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["烤盘饭", "重辣"],
+                "description": "四食堂二楼烤盘饭窗口 - 重辣口味"
+            },
+            {
+                "id": 49,
+                "name": "自助现炒菜",
+                "window": "四食堂二楼甄选称重窗口",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 2.38,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.3,
+                "popularity": 88,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["自助称重", "复合味"],
+                "description": "四食堂二楼甄选称重窗口 - 复合味"
+            },
+            {
+                "id": 50,
+                "name": "厚切大猪排饭",
+                "window": "四食堂二楼M小俄餐猪排饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "烤",
+                "spicy": 0,
+                "price": 17.8,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 86,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["盖浇饭", "浓郁咖喱"],
+                "description": "四食堂二楼M小俄餐猪排饭 - 浓郁咖喱"
+            },
+            {
+                "id": 51,
+                "name": "红烩牛肉饭",
+                "window": "四食堂二楼M小俄餐猪排饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 18.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.6,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["盖浇饭", "咸甜"],
+                "description": "四食堂二楼M小俄餐猪排饭 - 咸甜口味"
+            },
+            {
+                "id": 52,
+                "name": "番茄肉酱意面",
+                "window": "四食堂二楼M小俄餐猪排饭",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 14.8,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面食", "酸甜"],
+                "description": "四食堂二楼M小俄餐猪排饭 - 酸甜口味"
+            },
+            {
+                "id": 53,
+                "name": "清淡粉/面",
+                "window": "四食堂二楼传承潮汕",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 9.9,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.4,
+                "popularity": 72,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["汤面", "清淡"],
+                "description": "四食堂二楼传承潮汕 - 清淡口味"
+            },
+            {
+                "id": 54,
+                "name": "红焖南乳肉面",
+                "window": "四食堂二楼传承潮汕",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 17.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 84,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["汤面", "咸鲜"],
+                "description": "四食堂二楼传承潮汕 - 咸鲜口味"
+            },
+            {
+                "id": 55,
+                "name": "紫菜猪肉馅广式云吞",
+                "window": "四食堂二楼传承潮汕",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "light",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.6,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["云吞", "鲜香"],
+                "description": "四食堂二楼传承潮汕 - 鲜香口味"
+            },
+            {
+                "id": 56,
+                "name": "墨鱼丸/猪肉丸",
+                "window": "四食堂二楼传承潮汕",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 3.0,
+                "satiety": "light",
+                "health": ["high_protein"],
+                "rating": 4.5,
+                "popularity": 75,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["小吃", "鲜香"],
+                "description": "四食堂二楼传承潮汕 - 鲜香口味"
+            },
+            {
+                "id": 57,
+                "name": "小炒土猪肉",
+                "window": "四食堂三楼湘赣风味",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 2,
+                "price": 16.0,
+                "satiety": "heavy",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.7,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["盖浇饭", "中辣"],
+                "description": "四食堂三楼湘赣风味 - 中辣口味"
+            },
+            {
+                "id": 58,
+                "name": "鱼香肉丝饭",
+                "window": "四食堂三楼湘赣风味",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 2,
+                "price": 17.0,
+                "satiety": "heavy",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["盖浇饭", "酸辣"],
+                "description": "四食堂三楼湘赣风味 - 酸辣口味"
+            },
+            {
+                "id": 59,
+                "name": "北京烤鸭+鸭架炒饭套餐",
+                "window": "四食堂三楼北京风味",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "烤",
+                "spicy": 0,
+                "price": 18.8,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.8,
+                "popularity": 92,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["套餐", "酱香"],
+                "description": "四食堂三楼北京风味 - 酱香套餐"
+            },
+            {
+                "id": 60,
+                "name": "冒卤鸭腿",
+                "window": "四食堂三楼北京风味",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "卤",
+                "spicy": 0,
+                "price": 16.0,
+                "satiety": "light",
+                "health": ["high_protein"],
+                "rating": 4.6,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["卤味", "咸鲜"],
+                "description": "四食堂三楼北京风味 - 咸鲜口味"
+            },
+            {
+                "id": 61,
+                "name": "潮汕肉卷饭",
+                "window": "四食堂三楼广东风味",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "烤",
+                "spicy": 0,
+                "price": 12.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 76,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["烧腊饭", "清淡"],
+                "description": "四食堂三楼广东风味 - 清淡口味"
+            },
+            {
+                "id": 62,
+                "name": "蜜汁叉烧饭",
+                "window": "四食堂三楼广东风味",
+                "category": "米饭",
+                "temp": "热",
+                "cooking": "烤",
+                "spicy": 0,
+                "price": 16.0,
+                "satiety": "medium",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 84,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["烧腊饭", "鲜甜"],
+                "description": "四食堂三楼广东风味 - 鲜甜口味"
+            },
+            {
+                "id": 63,
+                "name": "牛肉拉面",
+                "window": "四食堂三楼西北风味",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 10.0,
+                "satiety": "medium",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.6,
+                "popularity": 86,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["面食", "咸鲜"],
+                "description": "四食堂三楼西北风味 - 咸鲜口味"
+            },
+            {
+                "id": 64,
+                "name": "大盘鸡盖浇饭",
+                "window": "四食堂三楼西北风味",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 1,
+                "price": 18.0,
+                "satiety": "heavy",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.7,
+                "popularity": 88,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["盖浇饭", "微辣"],
+                "description": "四食堂三楼西北风味 - 微辣口味"
+            },
+            {
+                "id": 65,
+                "name": "腊味双拼煲仔饭",
+                "window": "四食堂三楼煲仔饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 16.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["煲仔饭", "咸鲜"],
+                "description": "四食堂三楼煲仔饭 - 咸鲜口味"
+            },
+            {
+                "id": 66,
+                "name": "香辣鱿鱼煲仔饭",
+                "window": "四食堂三楼煲仔饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 2,
+                "price": 18.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.6,
+                "popularity": 80,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["煲仔饭", "中辣"],
+                "description": "四食堂三楼煲仔饭 - 中辣口味"
+            },
+            {
+                "id": 67,
+                "name": "齐市烤肉拌饭",
+                "window": "四食堂三楼烤肉拌饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 1,
+                "price": 16.8,
+                "satiety": "heavy",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.6,
+                "popularity": 82,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["拌饭", "孜然"],
+                "description": "四食堂三楼烤肉拌饭 - 孜然口味"
+            },
+            {
+                "id": 68,
+                "name": "韩式烤肉拌饭",
+                "window": "四食堂三楼烤肉拌饭",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 1,
+                "price": 16.0,
+                "satiety": "heavy",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["拌饭", "甜辣"],
+                "description": "四食堂三楼烤肉拌饭 - 甜辣口味"
+            },
+            {
+                "id": 69,
+                "name": "沙县拌面",
+                "window": "四食堂三楼胡建小吃",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 1,
+                "price": 6.0,
+                "satiety": "medium",
+                "health": ["balanced"],
+                "rating": 4.3,
+                "popularity": 70,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面食", "花生酱味"],
+                "description": "四食堂三楼胡建小吃 - 花生酱味"
+            },
+            {
+                "id": 70,
+                "name": "柳叶蒸饺",
+                "window": "四食堂三楼胡建小吃",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "蒸",
+                "spicy": 0,
+                "price": 8.0,
+                "satiety": "light",
+                "health": ["balanced"],
+                "rating": 4.5,
+                "popularity": 72,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["面点", "清淡"],
+                "description": "四食堂三楼胡建小吃 - 清淡口味"
+            },
+            {
+                "id": 71,
+                "name": "红烧排骨面",
+                "window": "四食堂三楼精品面馆",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 85,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["面食", "咸鲜"],
+                "description": "四食堂三楼精品面馆 - 咸鲜口味"
+            },
+            {
+                "id": 72,
+                "name": "麻辣小龙虾面",
+                "window": "四食堂三楼精品面馆",
+                "category": "面食",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 2,
+                "price": 18.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.6,
+                "popularity": 82,
+                "isNew": true,
+                "isHot": true,
+                "tags": ["面食", "中辣"],
+                "description": "四食堂三楼精品面馆 - 中辣口味"
+            },
+            {
+                "id": 73,
+                "name": "手工猪肉大饺子",
+                "window": "四食堂三楼香香拌面/饺子/云吞",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 12.0,
+                "satiety": "light",
+                "health": ["balanced", "high_protein"],
+                "rating": 4.5,
+                "popularity": 78,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["饺子", "鲜香"],
+                "description": "四食堂三楼香香拌面/饺子/云吞 - 鲜香口味"
+            },
+            {
+                "id": 74,
+                "name": "虾仁鲜肉云吞",
+                "window": "四食堂三楼香香拌面/饺子/云吞",
+                "category": "小吃",
+                "temp": "热",
+                "cooking": "煮",
+                "spicy": 0,
+                "price": 15.0,
+                "satiety": "light",
+                "health": ["high_protein", "balanced"],
+                "rating": 4.6,
+                "popularity": 80,
+                "isNew": true,
+                "isHot": false,
+                "tags": ["云吞", "鲜甜"],
+                "description": "四食堂三楼香香拌面/饺子/云吞 - 鲜甜口味"
+            },
+            {
+                "id": 75,
+                "name": "经典黄焖鸡米饭",
+                "window": "四食堂三楼黄焖鸡/石锅鱼",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 16.0,
+                "satiety": "heavy",
+                "health": ["balanced"],
+                "rating": 4.6,
+                "popularity": 88,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["盖浇饭", "浓郁"],
+                "description": "四食堂三楼黄焖鸡/石锅鱼 - 浓郁口味"
+            },
+            {
+                "id": 76,
+                "name": "麻辣石锅鱼",
+                "window": "四食堂三楼黄焖鸡/石锅鱼",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 3,
+                "price": 18.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 84,
+                "isNew": false,
+                "isHot": true,
+                "tags": ["盖浇饭", "麻辣"],
+                "description": "四食堂三楼黄焖鸡/石锅鱼 - 麻辣口味"
+            },
+            {
+                "id": 77,
+                "name": "土豆烧排骨",
+                "window": "四食堂三楼黄焖鸡/石锅鱼",
+                "category": "盖浇饭",
+                "temp": "热",
+                "cooking": "炒",
+                "spicy": 0,
+                "price": 17.0,
+                "satiety": "heavy",
+                "health": ["high_protein"],
+                "rating": 4.7,
+                "popularity": 86,
+                "isNew": false,
+                "isHot": false,
+                "tags": ["盖浇饭", "酱香"],
+                "description": "四食堂三楼黄焖鸡/石锅鱼 - 酱香口味"
+            }
+        ];
+
+        // 场景配置
+        const scenarioConfigs = {
+            quick: {
+                category: ["面食", "小吃"],
+                satiety: ["light", "medium"],
+                temp: ["热"],
+                price: [0, 12]
+            },
+            satisfying: {
+                satiety: ["medium", "heavy"],
+                temp: ["热"],
+                price: [10, 30]
+            },
+            light: {
+                health: ["vegetarian", "low_oil", "balanced"],
+                satiety: ["light", "medium"],
+                temp: ["热"]
+            },
+            treat: {
+                price: [15, 30],
+                recommend: ["hot", "high_rating"]
+            }
+        };
+
+        // 筛选状态
+        let filters = {
+            category: [],
+            temp: null,
+            cooking: [],
+            spicy: 1,
+            budget: null,
+            satiety: null,
+            health: [],
+            recommend: []
+        };
+
+        let currentResults = [];
+        let currentSort = 'match';
+
+        // 场景选择
+        document.querySelectorAll('.scenario-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const scenario = this.dataset.scenario;
+
+                document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+
+                if (scenario === 'random') {
+                    randomRecommend();
+                    return;
+                }
+
+                if (scenario === 'more') {
+                    document.querySelector('.filter-section').scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    return;
+                }
+
+                this.classList.add('selected');
+
+                resetFilters();
+                const config = scenarioConfigs[scenario];
+
+                setTimeout(() => {
+                    document.querySelector('.results-section').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 300);
+
+                if (config.category) {
+                    config.category.forEach(val => {
+                        filters.category.push(val);
+                        const btn = document.querySelector(`[data-type="category"][data-value="${val}"]`);
+                        if (btn) btn.classList.add('active');
+                    });
+                }
+
+                if (config.satiety) {
+                    filters.satiety = config.satiety[0];
+                    const btn = document.querySelector(`[data-type="satiety"][data-value="${config.satiety[0]}"]`);
+                    if (btn) btn.classList.add('active');
+                }
+
+                if (config.temp) {
+                    filters.temp = config.temp[0];
+                    const btn = document.querySelector(`[data-type="temp"][data-value="${config.temp[0]}"]`);
+                    if (btn) btn.classList.add('active');
+                }
+
+                if (config.price) {
+                    if (config.price[1] <= 10) {
+                        filters.budget = 'low';
+                        const btn = document.querySelector('[data-budget="low"]');
+                        if (btn) btn.classList.add('active');
+                    } else if (config.price[1] <= 20) {
+                        filters.budget = 'medium';
+                        const btn = document.querySelector('[data-budget="medium"]');
+                        if (btn) btn.classList.add('active');
+                    } else {
+                        filters.budget = 'high';
+                        const btn = document.querySelector('[data-budget="high"]');
+                        if (btn) btn.classList.add('active');
+                    }
+                }
+
+                getRecommendations();
+            });
+        });
+
+        // 筛选按钮事件
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const type = this.dataset.type;
+                const value = this.dataset.value;
+                const isMutuallyExclusive = this.parentElement.classList.contains('mutually-exclusive');
+
+                document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+
+                if (isMutuallyExclusive) {
+                    const siblings = this.parentElement.querySelectorAll('.filter-btn');
+                    siblings.forEach(sib => sib.classList.remove('active'));
+                    if (filters[type] === value) {
+                        filters[type] = null;
+                    } else {
+                        filters[type] = value;
+                        this.classList.add('active');
+                    }
+                } else {
+                    if (filters[type].includes(value)) {
+                        filters[type] = filters[type].filter(v => v !== value);
+                        this.classList.remove('active');
+                    } else {
+                        filters[type].push(value);
+                        this.classList.add('active');
+                    }
+                }
+
+                if (this.closest('.filter-buttons-with-more')) {
+                    scrollToNextFilterButton(this);
+                } else {
+                    scrollToNextFilterGroup(this);
+                }
+            });
+        });
+
+        // 辣度滑块
+        document.getElementById('spicySlider').addEventListener('input', function() {
+            filters.spicy = parseInt(this.value);
+        });
+
+        document.getElementById('spicySlider').addEventListener('change', function() {
+            scrollToNextFilterGroup(this);
+        });
+
+        // 预算选择
+        document.querySelectorAll('.budget-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.budget-btn').forEach(b => b.classList.remove('active'));
+                const budget = this.dataset.budget;
+                if (filters.budget === budget) {
+                    filters.budget = null;
+                } else {
+                    filters.budget = budget;
+                    this.classList.add('active');
+                }
+
+                scrollToNextFilterGroup(this);
+            });
+        });
+
+        function scrollToNextFilterGroup(currentElement) {
+            let currentGroup = currentElement.closest('.filter-group');
+            if (!currentGroup) return;
+
+            let nextGroup = currentGroup.nextElementSibling;
+            while (nextGroup && !nextGroup.classList.contains('filter-group')) {
+                nextGroup = nextGroup.nextElementSibling;
+            }
+
+            if (nextGroup) {
+                nextGroup.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }
+
+        function scrollToNextFilterButton(currentButton) {
+            let currentButtons = currentButton.closest('.filter-buttons');
+            if (currentButtons && currentButtons.id) {
+                scrollToNextFilterGroup(currentButton);
+                return;
+            }
+
+            let moreFilters = currentButton.closest('.more-filters');
+            if (moreFilters) {
+                scrollToNextFilterGroup(currentButton);
+                return;
+            }
+
+            scrollToNextFilterGroup(currentButton);
+        }
+
+        // 计算匹配分数
+        function calculateMatchScore(food) {
+            let score = 0;
+            let maxScore = 0;
+
+            // 菜品类别（15分）
+            if (filters.category.length > 0) {
+                maxScore += 15;
+                if (filters.category.includes(food.category)) score += 15;
+            }
+
+            // 温度（10分）
+            if (filters.temp) {
+                maxScore += 10;
+                if (food.temp === filters.temp) score += 10;
+            }
+
+            // 烹饪方式（10分）
+            if (filters.cooking.length > 0) {
+                maxScore += 10;
+                if (filters.cooking.includes(food.cooking)) score += 10;
+            }
+
+            // 辣度（15分）
+            maxScore += 15;
+            const spicyDiff = Math.abs(food.spicy - filters.spicy);
+            score += Math.max(0, 15 - spicyDiff * 5);
+
+            // 预算（15分）
+            if (filters.budget) {
+                maxScore += 15;
+                if (filters.budget === 'low' && food.price <= 10) score += 15;
+                else if (filters.budget === 'medium' && food.price >= 11 && food.price <= 20) score += 15;
+                else if (filters.budget === 'high' && food.price >= 21) score += 15;
+            }
+
+            // 饱腹感（10分）
+            if (filters.satiety) {
+                maxScore += 10;
+                const satietyMap = { 'light': 1, 'medium': 2, 'heavy': 3 };
+                if (satietyMap[food.satiety] >= satietyMap[filters.satiety]) score += 10;
+            }
+
+            // 健康偏好（10分）
+            if (filters.health.length > 0) {
+                maxScore += 10;
+                const healthMatch = filters.health.some(h => food.health.includes(h));
+                if (healthMatch) score += 10;
+            }
+
+            // 推荐维度（15分）
+            if (filters.recommend.length > 0) {
+                maxScore += 15;
+                if (filters.recommend.includes('hot') && food.isHot) score += 5;
+                if (filters.recommend.includes('high_rating') && food.rating >= 4.5) score += 5;
+                if (filters.recommend.includes('new') && food.isNew) score += 5;
+                if (filters.recommend.includes('best_value') && food.price <= 10 && food.rating >= 4.2) score += 5;
+            }
+
+            if (maxScore === 0) {
+                score = food.rating * 20 + food.popularity / 10;
+            } else {
+                score = (score / maxScore) * 100;
+            }
+
+            return Math.round(score);
+        }
+
+        // 获取推荐
+        function getRecommendations() {
+            currentResults = foodDatabase.map(food => ({
+                ...food,
+                matchScore: calculateMatchScore(food)
+            }));
+
+            const hasFilters = Object.values(filters).some(v =>
+                Array.isArray(v) ? v.length > 0 : v !== null && v !== 1
+            );
+
+            if (hasFilters) {
+                currentResults = currentResults.filter(r => r.matchScore > 0);
+            }
+
+            sortResults(currentSort);
+        }
+
+        // 排序
+        function sortResults(sortBy) {
+            currentSort = sortBy;
+
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            event?.target?.classList.add('active');
+
+            switch(sortBy) {
+                case 'match':
+                    currentResults.sort((a, b) => b.matchScore - a.matchScore);
+                    break;
+                case 'popularity':
+                    currentResults.sort((a, b) => b.popularity - a.popularity);
+                    break;
+                case 'rating':
+                    currentResults.sort((a, b) => b.rating - a.rating);
+                    break;
+                case 'price':
+                    currentResults.sort((a, b) => a.price - b.price);
+                    break;
+            }
+
+            displayResults();
+        }
+
+        // 随机推荐
+        function randomRecommend() {
+            resetFilters();
+            const randomCount = Math.min(6, foodDatabase.length);
+            const shuffled = [...foodDatabase].sort(() => Math.random() - 0.5);
+            currentResults = shuffled.slice(0, randomCount).map(food => ({
+                ...food,
+                matchScore: 100
+            }));
+
+            document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector('[data-scenario="random"]').classList.add('active');
+
+            displayResults();
+        }
+
+        // 显示结果
+        function displayResults() {
+            const container = document.getElementById('resultsContainer');
+            const countEl = document.getElementById('resultsCount');
+
+            if (currentResults.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <div style="font-size: 3em; margin-bottom: 20px;">😕</div>
+                        <div>没有找到符合条件的菜品</div>
+                        <div style="font-size: 0.9em; margin-top: 10px; color: #999;">试试调整筛选条件或点击随机推荐</div>
+                    </div>
+                `;
+                countEl.textContent = '共 0 个菜品';
+                return;
+            }
+
+            countEl.textContent = `共 ${currentResults.length} 个菜品`;
+
+            container.innerHTML = currentResults.map((food, index) => {
+                let badges = '';
+                if (food.isHot) badges += '<span class="badge badge-hot">🔥 热门</span>';
+                if (food.isNew) badges += '<span class="badge badge-new">✨ 新品</span>';
+                if (index === 0 && currentResults.length > 1) badges += '<span class="badge badge-recommend">⭐ 推荐</span>';
+
+                const spicyLabels = ['不辣', '微辣', '中辣', '特辣'];
+                const spicyColor = ['#4CAF50', '#FFC107', '#FF9800', '#FF5722'];
+
+                return `
+                    <div class="food-card ${index === 0 ? 'recommended' : ''} ${food.isHot ? 'hot' : ''}">
+                        <div class="food-header">
+                            <div>
+                                <div class="food-name">${food.name}</div>
+                                <div class="food-window">📍 ${food.window}</div>
+                            </div>
+                            <div class="food-badges">${badges}</div>
+                        </div>
+                        <div class="food-info">
+                            <div class="info-item">
+                                <div class="info-label">价格</div>
+                                <div class="info-value">¥${food.price}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">评分</div>
+                                <div class="info-value">⭐ ${food.rating}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">热度</div>
+                                <div class="info-value">${food.popularity}%</div>
+                            </div>
+                        </div>
+                        <div class="food-tags">
+                            <span class="tag tag-category">${food.category}</span>
+                            <span class="tag tag-temp">${food.temp}</span>
+                            <span class="tag tag-cooking">${food.cooking}</span>
+                            <span class="tag tag-spicy" style="background-color: ${spicyColor[food.spicy]}20; color: ${spicyColor[food.spicy]}">${spicyLabels[food.spicy]}</span>
+                            <span class="tag tag-satiety">${food.satiety === 'light' ? '轻食' : food.satiety === 'medium' ? '适中' : '超饱'}</span>
+                            ${food.tags.map(t => `<span class="tag tag-oily">${t}</span>`).join('')}
+                        </div>
+                        <div class="match-score">匹配度: ${food.matchScore}%</div>
+                        <div class="food-description">${food.description}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            filters = {
+                category: [],
+                temp: null,
+                cooking: [],
+                spicy: 1,
+                budget: null,
+                satiety: null,
+                health: [],
+                recommend: []
+            };
+
+            document.getElementById('spicySlider').value = 1;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.budget-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.scenario-card').forEach(card => card.classList.remove('selected'));
+
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="no-results">
+                    <div style="font-size: 3em; margin-bottom: 20px;">🍽️</div>
+                    <div>选择你的用餐场景或点击推荐按钮</div>
+                    <div style="font-size: 0.9em; margin-top: 10px; color: #999;">我们会为你推荐最适合的美食</div>
+                </div>
+            `;
+            document.getElementById('resultsCount').textContent = '点击推荐按钮开始';
+        }
+    </script>
+</body>
+</html>
